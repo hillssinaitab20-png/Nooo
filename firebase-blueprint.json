@@ -1,0 +1,104 @@
+{
+  "entities": {
+    "AdminProfile": {
+      "title": "AdminProfile",
+      "description": "Administrator profile record for authorization and session verification",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID of the administrator" },
+        "email": { "type": "string", "format": "email", "description": "Verified administrator email" },
+        "displayName": { "type": "string", "description": "Display name of the administrator" },
+        "photoURL": { "type": "string", "description": "Profile picture URL" },
+        "lastLoginAt": { "type": "string", "description": "ISO timestamp of last login" },
+        "role": { "type": "string", "enum": ["admin"], "description": "Role identifier" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "ConnectedAccount": {
+      "title": "ConnectedAccount",
+      "description": "Metadata for an administrator-authorized personal Google account",
+      "type": "object",
+      "properties": {
+        "accountId": { "type": "string", "description": "Unique Google Subject ID or normalized identifier" },
+        "email": { "type": "string", "format": "email", "description": "Google account email address" },
+        "name": { "type": "string", "description": "Account display name" },
+        "picture": { "type": "string", "description": "Google profile image URL" },
+        "status": { "type": "string", "enum": ["connected", "disconnected", "expired", "needs_reauth"], "description": "Connection status" },
+        "scope": { "type": "string", "description": "Authorized Google OAuth scopes" },
+        "connectedAt": { "type": "string", "description": "Timestamp when account was first connected" },
+        "lastSyncAt": { "type": "string", "description": "Timestamp of most recent sync check" },
+        "services": { "type": "string", "description": "Comma-separated list of enabled services (e.g. gmail,youtube,search)" }
+      },
+      "required": ["accountId", "email", "status"]
+    },
+    "YouTubeRecord": {
+      "title": "YouTubeRecord",
+      "description": "Imported Google Takeout YouTube watch history entry",
+      "type": "object",
+      "properties": {
+        "accountId": { "type": "string", "description": "Associated Google Account ID" },
+        "recordId": { "type": "string", "description": "Deterministic fingerprint ID" },
+        "title": { "type": "string", "description": "Video title" },
+        "titleUrl": { "type": "string", "description": "YouTube video link" },
+        "channelTitle": { "type": "string", "description": "Channel or creator name" },
+        "channelUrl": { "type": "string", "description": "Channel URL" },
+        "watchedAt": { "type": "string", "description": "Watch timestamp parsed from Takeout" },
+        "importedAt": { "type": "string", "description": "Timestamp when file was imported" },
+        "source": { "type": "string", "description": "Source filename or archive label" }
+      },
+      "required": ["accountId", "recordId", "title", "watchedAt"]
+    },
+    "SearchRecord": {
+      "title": "SearchRecord",
+      "description": "Imported Google Takeout / My Activity Search record",
+      "type": "object",
+      "properties": {
+        "accountId": { "type": "string", "description": "Associated Google Account ID" },
+        "recordId": { "type": "string", "description": "Deterministic fingerprint ID" },
+        "query": { "type": "string", "description": "Search query text" },
+        "searchUrl": { "type": "string", "description": "Google search URL if recorded" },
+        "searchedAt": { "type": "string", "description": "Search timestamp" },
+        "importedAt": { "type": "string", "description": "Timestamp when imported" },
+        "source": { "type": "string", "description": "Source archive label" }
+      },
+      "required": ["accountId", "recordId", "query", "searchedAt"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "Application audit log entry for security and synchronization tracking",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Log entry unique ID" },
+        "type": { "type": "string", "description": "Action type (e.g. login, connect_account, sync_gmail, import_takeout)" },
+        "accountEmail": { "type": "string", "description": "Target account email or admin email" },
+        "status": { "type": "string", "enum": ["success", "warning", "error", "info"], "description": "Status" },
+        "summary": { "type": "string", "description": "Human-readable event summary" },
+        "timestamp": { "type": "string", "description": "Event timestamp" },
+        "ip": { "type": "string", "description": "Origin address or masked client indicator" }
+      },
+      "required": ["id", "type", "status", "summary", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/admins/{uid}": {
+      "schema": "AdminProfile",
+      "description": "Single authorized administrator identity and profile"
+    },
+    "/accounts/{accountId}": {
+      "schema": "ConnectedAccount",
+      "description": "Connected Google accounts authorized by administrator"
+    },
+    "/accounts/{accountId}/youtube_history/{recordId}": {
+      "schema": "YouTubeRecord",
+      "description": "Imported YouTube watch history subcollection per account"
+    },
+    "/accounts/{accountId}/search_history/{recordId}": {
+      "schema": "SearchRecord",
+      "description": "Imported Google Search history subcollection per account"
+    },
+    "/activity_logs/{logId}": {
+      "schema": "ActivityLog",
+      "description": "Application activity and audit logs"
+    }
+  }
+}

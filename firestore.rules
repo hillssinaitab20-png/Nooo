@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default-deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedAdmin() {
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == 'hillssinaitab20@gmail.com';
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-\\.]+$');
+    }
+
+    // Administrator profile
+    match /admins/{uid} {
+      allow get: if isVerifiedAdmin() && request.auth.uid == uid;
+      allow list: if isVerifiedAdmin();
+      allow write: if isVerifiedAdmin() && request.auth.uid == uid;
+    }
+
+    // Connected Accounts metadata (No raw secrets or tokens stored here)
+    match /accounts/{accountId} {
+      allow get, list: if isVerifiedAdmin();
+      allow create, update, delete: if isVerifiedAdmin() && isValidId(accountId);
+
+      // Account-specific subcollections: YouTube Takeout History
+      match /youtube_history/{recordId} {
+        allow get, list: if isVerifiedAdmin();
+        allow create, update, delete: if isVerifiedAdmin() && isValidId(recordId);
+      }
+
+      // Account-specific subcollections: Google Search History
+      match /search_history/{recordId} {
+        allow get, list: if isVerifiedAdmin();
+        allow create, update, delete: if isVerifiedAdmin() && isValidId(recordId);
+      }
+    }
+
+    // Audit and Activity logs
+    match /activity_logs/{logId} {
+      allow get, list: if isVerifiedAdmin();
+      allow create, update, delete: if isVerifiedAdmin() && isValidId(logId);
+    }
+
+    // Strict zero-access rule for private credential store
+    match /private_credentials/{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
