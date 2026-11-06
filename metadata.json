@@ -1,0 +1,6 @@
+{
+  "name": "Account Command Center",
+  "description": "Private command center for administrators to manage, monitor, and synchronize authorized personal Google accounts, Gmail, and export archives.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
